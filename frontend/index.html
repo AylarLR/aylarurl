@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ordre Jedi — Terminal de Données</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --gold:#c9a84c; --gold-light:#f0d080; --gold-dark:#8a6a20;
+  --bg-deep:#050810; --bg-panel:#090d1a; --bg-card:#0d1225; --bg-hover:#131a30;
+  --border:#1e2d50; --border-gold:#c9a84c44;
+  --text-primary:#e8dcc0; --text-secondary:#8899bb; --text-muted:#445577;
+  --blue-force:#4a8fcc; --blue-light:#6ab4ee; --red-dark:#8b2020;
+  --green:#2a7a4a; --shadow-glow:0 0 20px #c9a84c22;
+}
+body { font-family:'Rajdhani',sans-serif; background:var(--bg-deep); color:var(--text-primary); min-height:100vh; overflow-x:hidden; }
+
+/* ---- LOGIN ---- */
+#login-screen {
+  position:fixed; inset:0; background:var(--bg-deep);
+  display:flex; align-items:center; justify-content:center; z-index:9999;
+}
+.login-box {
+  background:var(--bg-panel); border:1px solid var(--border-gold);
+  border-radius:16px; padding:40px; width:380px;
+  box-shadow:0 0 80px #c9a84c15;
+}
+.login-logo { text-align:center; margin-bottom:32px; }
+.login-logo svg { margin-bottom:12px; }
+.login-title { font-family:'Cinzel',serif; font-size:18px; color:var(--gold); letter-spacing:3px; }
+.login-sub { font-size:10px; color:var(--text-muted); letter-spacing:2px; margin-top:4px; }
+.login-error { background:#1a0808; border:1px solid var(--red-dark); color:#e05555; padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:16px; display:none; }
+
+/* ---- APP ---- */
+.app { display:flex; height:100vh; overflow:hidden; }
+.sidebar { width:220px; min-width:220px; background:var(--bg-panel); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
+.sidebar-logo { padding:20px 16px 16px; border-bottom:1px solid var(--border); text-align:center; }
+.logo-title { font-family:'Cinzel',serif; font-size:11px; color:var(--gold); letter-spacing:3px; text-transform:uppercase; }
+.logo-sub { font-size:9px; color:var(--text-muted); letter-spacing:2px; margin-top:2px; }
+.nav-section { padding:12px 8px 4px; }
+.nav-section-title { font-size:9px; letter-spacing:2px; color:var(--text-muted); text-transform:uppercase; padding:0 8px 6px; font-family:'Orbitron',monospace; }
+.nav-item { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; color:var(--text-secondary); transition:all 0.2s; border:1px solid transparent; margin-bottom:2px; letter-spacing:0.5px; }
+.nav-item:hover { background:var(--bg-hover); color:var(--text-primary); }
+.nav-item.active { background:linear-gradient(135deg,#0d1a35,#111a30); color:var(--gold); border-color:var(--border-gold); box-shadow:var(--shadow-glow); }
+.nav-icon { font-size:14px; width:18px; text-align:center; }
+.user-panel { margin-top:auto; padding:12px; border-top:1px solid var(--border); }
+.user-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:10px; cursor:pointer; transition:border-color 0.2s; }
+.user-card:hover { border-color:var(--border-gold); }
+.user-name { font-weight:600; font-size:13px; color:var(--gold); }
+.user-rank { font-size:11px; color:var(--text-secondary); margin-top:2px; }
+.logout-btn { width:100%; margin-top:8px; background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:6px; padding:6px; font-family:'Rajdhani',sans-serif; font-size:11px; cursor:pointer; letter-spacing:1px; text-transform:uppercase; transition:all 0.2s; }
+.logout-btn:hover { border-color:var(--red-dark); color:#e05555; }
+.main { flex:1; overflow-y:auto; background:var(--bg-deep); }
+
+/* ---- COMMON ---- */
+.page-header { padding:24px 32px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:linear-gradient(180deg,#080c18 0%,transparent 100%); flex-wrap:wrap; gap:12px; }
+.page-title { font-family:'Cinzel',serif; font-size:20px; color:var(--gold); letter-spacing:2px; }
+.page-sub { font-size:12px; color:var(--text-muted); margin-top:4px; letter-spacing:1px; }
+.content { padding:24px 32px; }
+.card { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:16px; }
+.card-title { font-family:'Cinzel',serif; font-size:13px; color:var(--gold); letter-spacing:1px; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:16px; text-align:center; position:relative; overflow:hidden; }
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent,var(--gold)); }
+.stat-value { font-family:'Orbitron',monospace; font-size:28px; font-weight:700; color:var(--accent,var(--gold)); display:block; }
+.stat-label { font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-top:4px; display:block; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.data-table { width:100%; border-collapse:collapse; font-size:13px; }
+.data-table th { text-align:left; padding:8px 12px; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); border-bottom:1px solid var(--border); font-family:'Orbitron',monospace; font-weight:400; }
+.data-table td { padding:10px 12px; border-bottom:1px solid #0d1830; color:var(--text-primary); vertical-align:middle; }
+.data-table tr:hover td { background:var(--bg-hover); }
+.data-table tr:last-child td { border-bottom:none; }
+.badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:600; letter-spacing:0.5px; border:1px solid; }
+.badge-gold { color:var(--gold); border-color:var(--gold); background:#c9a84c11; }
+.badge-blue { color:var(--blue-light); border-color:var(--blue-force); background:#4a8fcc11; }
+.badge-green { color:#5acc88; border-color:#2a7a4a; background:#2a7a4a11; }
+.badge-red { color:#e05555; border-color:var(--red-dark); background:#8b202011; }
+.badge-purple { color:#aa88ee; border-color:#6644aa; background:#6644aa11; }
+.badge-gray { color:var(--text-secondary); border-color:var(--border); background:#1a2040; }
+.btn { padding:8px 18px; border-radius:6px; border:1px solid; cursor:pointer; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; transition:all 0.2s; }
+.btn-primary { background:linear-gradient(135deg,#1a2a50,#0d1a35); border-color:var(--gold); color:var(--gold); }
+.btn-primary:hover { background:#c9a84c22; box-shadow:var(--shadow-glow); }
+.btn-danger { background:#1a0808; border-color:var(--red-dark); color:#e05555; }
+.btn-danger:hover { background:#8b202022; }
+.btn-sm { padding:4px 12px; font-size:11px; }
+.btn:disabled { opacity:0.4; cursor:not-allowed; }
+.form-row { display:flex; gap:16px; margin-bottom:14px; flex-wrap:wrap; }
+.form-group { flex:1; min-width:180px; }
+.form-label { font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; display:block; margin-bottom:6px; font-family:'Orbitron',monospace; font-weight:400; }
+.form-input,.form-select,.form-textarea { width:100%; background:var(--bg-deep); border:1px solid var(--border); border-radius:6px; padding:9px 12px; color:var(--text-primary); font-family:'Rajdhani',sans-serif; font-size:14px; transition:border-color 0.2s; outline:none; }
+.form-input:focus,.form-select:focus,.form-textarea:focus { border-color:var(--gold); box-shadow:0 0 0 2px #c9a84c22; }
+.form-select option { background:var(--bg-deep); }
+.form-textarea { resize:vertical; min-height:80px; }
+.member-card { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:16px; transition:border-color 0.2s; cursor:pointer; }
+.member-card:hover { border-color:var(--border-gold); }
+.member-avatar { width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,#1a2a50,#0d1a35); border:2px solid var(--border-gold); display:flex; align-items:center; justify-content:center; font-size:20px; margin-bottom:10px; overflow:hidden; }
+.member-avatar img { width:100%; height:100%; object-fit:cover; }
+.member-name { font-family:'Cinzel',serif; font-size:14px; color:var(--text-primary); margin-bottom:4px; }
+.report-item { padding:14px; border-radius:8px; background:var(--bg-deep); border:1px solid var(--border); margin-bottom:8px; cursor:pointer; }
+.report-item:hover { border-color:#2a3a60; }
+.modal-overlay { position:fixed; inset:0; background:#000000cc; display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
+.modal { background:var(--bg-panel); border:1px solid var(--border-gold); border-radius:12px; padding:28px; width:100%; max-width:560px; max-height:82vh; overflow-y:auto; box-shadow:0 0 60px #c9a84c18; }
+.modal-title { font-family:'Cinzel',serif; font-size:16px; color:var(--gold); margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--border); letter-spacing:1px; }
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; padding-top:16px; border-top:1px solid var(--border); }
+.search-bar { background:var(--bg-deep); border:1px solid var(--border); border-radius:8px; padding:8px 14px; color:var(--text-primary); font-family:'Rajdhani',sans-serif; font-size:14px; outline:none; width:240px; transition:border-color 0.2s; }
+.search-bar:focus { border-color:var(--gold); }
+.holocom-msg { padding:12px 16px; border-radius:8px; margin-bottom:8px; border-left:3px solid; }
+.holocom-msg.maitre { border-color:var(--gold); background:#0d140a; }
+.holocom-msg.conseil { border-color:#8899ff; background:#0a0d1a; }
+.holocom-msg.info { border-color:var(--blue-force); background:#0a1220; }
+.mission-card { background:var(--bg-deep); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:8px; }
+.prison-entry { background:var(--bg-deep); border:1px solid var(--red-dark); border-radius:8px; padding:14px; margin-bottom:8px; }
+.tab-bar { display:flex; gap:4px; margin-bottom:20px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.tab { padding:8px 18px; font-size:12px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; color:var(--text-muted); border-bottom:2px solid transparent; transition:all 0.2s; font-family:'Rajdhani',sans-serif; font-weight:600; }
+.tab.active { color:var(--gold); border-color:var(--gold); }
+.tab:hover:not(.active) { color:var(--text-secondary); }
+.scrollable { max-height:380px; overflow-y:auto; }
+.empty-state { text-align:center; padding:40px 20px; color:var(--text-muted); font-size:13px; }
+.empty-icon { font-size:32px; margin-bottom:12px; opacity:0.5; }
+.flex { display:flex; align-items:center; }
+.flex-between { display:flex; align-items:center; justify-content:space-between; }
+.gap-8 { gap:8px; }
+.gap-12 { gap:12px; }
+.photo-upload-area { border:2px dashed var(--border); border-radius:8px; padding:16px; text-align:center; cursor:pointer; transition:border-color 0.2s; background:var(--bg-deep); }
+.photo-upload-area:hover { border-color:var(--gold); }
+.photo-preview { width:70px; height:70px; border-radius:50%; object-fit:cover; border:2px solid var(--border-gold); margin:0 auto 8px; display:block; }
+.spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.toast { position:fixed; bottom:24px; right:24px; background:var(--bg-panel); border:1px solid var(--border-gold); border-radius:8px; padding:12px 20px; font-size:13px; color:var(--text-primary); z-index:9999; opacity:0; transform:translateY(10px); transition:all 0.3s; pointer-events:none; }
+.toast.show { opacity:1; transform:translateY(0); }
+.toast.error { border-color:var(--red-dark); color:#e05555; }
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:var(--bg-deep); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+.admin-badge { display:inline-block; padding:1px 7px; border-radius:10px; font-size:9px; border:1px solid #6644aa; color:#aa88ee; background:#6644aa18; letter-spacing:1px; text-transform:uppercase; margin-left:6px; vertical-align:middle; }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg viewBox="0 0 56 56" width="56" height="56" fill="none">
+        <circle cx="28" cy="28" r="26" stroke="#c9a84c" stroke-width="1.5" opacity="0.4"/>
+        <circle cx="28" cy="28" r="16" stroke="#c9a84c" stroke-width="1"/>
+        <line x1="28" y1="2" x2="28" y2="54" stroke="#c9a84c" stroke-width="1" opacity="0.5"/>
+        <line x1="2" y1="28" x2="54" y2="28" stroke="#c9a84c" stroke-width="1" opacity="0.5"/>
+        <line x1="8" y1="8" x2="48" y2="48" stroke="#c9a84c" stroke-width="0.8" opacity="0.3"/>
+        <line x1="48" y1="8" x2="8" y2="48" stroke="#c9a84c" stroke-width="0.8" opacity="0.3"/>
+        <circle cx="28" cy="28" r="5" fill="#c9a84c" opacity="0.85"/>
+      </svg>
+      <div class="login-title">Ordre Jedi</div>
+      <div class="login-sub">Terminal de Données Sécurisé</div>
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">Identifiant</label>
+      <input class="form-input" id="login-user" placeholder="Nom de compte" autocomplete="username">
+    </div>
+    <div class="form-group" style="margin-bottom:24px">
+      <label class="form-label">Mot de passe</label>
+      <input class="form-input" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" id="login-btn" onclick="doLogin()">
+      Se connecter
+    </button>
+    <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text-muted)">
+      Contactez un administrateur pour créer votre compte
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app" id="app" style="display:none">
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <svg viewBox="0 0 48 48" width="40" height="40" fill="none" style="margin-bottom:8px">
+        <circle cx="24" cy="24" r="22" stroke="#c9a84c" stroke-width="1.5" opacity="0.4"/>
+        <circle cx="24" cy="24" r="14" stroke="#c9a84c" stroke-width="1"/>
+        <line x1="24" y1="2" x2="24" y2="46" stroke="#c9a84c" stroke-width="1" opacity="0.5"/>
+        <line x1="2" y1="24" x2="46" y2="24" stroke="#c9a84c" stroke-width="1" opacity="0.5"/>
+        <circle cx="24" cy="24" r="4" fill="#c9a84c" opacity="0.8"/>
+      </svg>
+      <div class="logo-title">Ordre Jedi</div>
+      <div class="logo-sub">Terminal de Données</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Principal</div>
+      <div class="nav-item active" onclick="navigate('accueil')" id="nav-accueil"><span class="nav-icon">◈</span>Tableau de bord</div>
+      <div class="nav-item" onclick="navigate('holocom')" id="nav-holocom"><span class="nav-icon">◉</span>Holocommunicateur</div>
+      <div class="nav-item" onclick="navigate('missions')" id="nav-missions"><span class="nav-icon">◎</span>Missions</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Recensements</div>
+      <div class="nav-item" onclick="navigate('membres')" id="nav-membres"><span class="nav-icon">◇</span>Membres</div>
+      <div class="nav-item" onclick="navigate('recensements')" id="nav-recensements"><span class="nav-icon">▣</span>Fiches Jedi</div>
+      <div class="nav-item" onclick="navigate('formations')" id="nav-formations"><span class="nav-icon">◈</span>Formations</div>
+      <div class="nav-item" onclick="navigate('pouvoirs')" id="nav-pouvoirs"><span class="nav-icon">⊕</span>Pouvoirs Force</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Opérations</div>
+      <div class="nav-item" onclick="navigate('rapports')" id="nav-rapports"><span class="nav-icon">▤</span>Rapports</div>
+      <div class="nav-item" onclick="navigate('traques')" id="nav-traques"><span class="nav-icon">◉</span>Traques & Archives</div>
+      <div class="nav-item" onclick="navigate('prison')" id="nav-prison"><span class="nav-icon">⊗</span>Registre des Prisons</div>
+      <div class="nav-item" onclick="navigate('casier')" id="nav-casier"><span class="nav-icon">▦</span>Casiers Judiciaires</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Conseil</div>
+      <div class="nav-item" onclick="navigate('promotions')" id="nav-promotions"><span class="nav-icon">✦</span>Promotions</div>
+      <div class="nav-item admin-only" onclick="navigate('admin')" id="nav-admin" style="display:none"><span class="nav-icon">⚙</span>Administration</div>
+    </div>
+    <div class="user-panel">
+      <div class="user-card" onclick="navigate('profil')">
+        <div class="user-name" id="user-display-name">—</div>
+        <div class="user-rank" id="user-display-rank">—</div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">⏻ Déconnexion</button>
+    </div>
+  </nav>
+  <main class="main" id="main-content"></main>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="modal-container"></div>
+
+<script>
+// ============================================================
+// CONFIG — change l'URL selon ton serveur
+// ============================================================
+const API_BASE = window.location.origin;
+
+// ============================================================
+// CONSTANTES
+// ============================================================
+const RANKS = [
+  { id:'maitre-ordre', label:"Maître de l'Ordre", tier:'conseil', badge:'badge-gold' },
+  { id:'haut-conseil', label:"Membre du Haut Conseil", tier:'conseil', badge:'badge-gold' },
+  { id:'maitre-jedi', label:"Maître Jedi", tier:'maitre', badge:'badge-gold' },
+  { id:'maitre-ombres', label:"Maître des Ombres", tier:'maitre-spec', badge:'badge-purple' },
+  { id:'maitre-sentinelles', label:"Maître des Sentinelles", tier:'maitre-spec', badge:'badge-purple' },
+  { id:'maitre-gardiens', label:"Maître des Gardiens", tier:'maitre-spec', badge:'badge-purple' },
+  { id:'maitre-erudits', label:"Maître des Érudits", tier:'maitre-spec', badge:'badge-purple' },
+  { id:'grande-ombre', label:"Grande Ombre", tier:'grande-spec', badge:'badge-blue' },
+  { id:'grand-erudit', label:"Grand Érudit", tier:'grande-spec', badge:'badge-blue' },
+  { id:'grande-sentinelle', label:"Grande Sentinelle", tier:'grande-spec', badge:'badge-blue' },
+  { id:'grand-gardien', label:"Grand Gardien", tier:'grande-spec', badge:'badge-blue' },
+  { id:'ombre', label:"Ombre", tier:'spec', badge:'badge-blue' },
+  { id:'erudit', label:"Érudit", tier:'spec', badge:'badge-blue' },
+  { id:'sentinelle', label:"Sentinelle", tier:'spec', badge:'badge-blue' },
+  { id:'gardien', label:"Gardien", tier:'spec', badge:'badge-blue' },
+  { id:'chevalier', label:"Chevalier", tier:'domaine', badge:'badge-green' },
+  { id:'consulaire', label:"Consulaire", tier:'domaine', badge:'badge-green' },
+  { id:'apprenti', label:"Apprenti Jedi", tier:'apprenti', badge:'badge-gray' }
+];
+const SPECS = ['Ombre','Érudit','Sentinelle','Gardien'];
+const POUVOIRS_LIST = ['Télékinésie','Saut de Force','Vitesse de Force','Bouclier de Force','Vision de Force','Emprise de Force','Guérison de Force','Dissimulation de Force','Répulsion de Force','Foudre de Force (restreint)','Communication par la Force','Perception de Force'];
+const MISSION_TYPES = ['Diplomatique','Combat','Infiltration','Escorte','Enquête','Patrouille','Formation'];
+const RAPPORT_TYPES = ['Mission','Interrogatoire','Post-capture','Formation','Traque','Incident','Médical'];
+
+function getRank(id) { return RANKS.find(r=>r.id===id)||{label:id||'—',badge:'badge-gray',tier:''}; }
+function badgeHtml(rankId) { const r=getRank(rankId); return `<span class="badge ${r.badge}">${r.label}</span>`; }
+function badgeMission(p) { return p==='urgente'||p==='haute'?'<span class="badge badge-red">'+p+'</span>':'<span class="badge badge-gray">Normale</span>'; }
+function fmtDate(str) { if(!str)return '—'; try{return new Date(str).toLocaleDateString('fr-FR');}catch{return str;} }
+function fmtDateTime(str) { if(!str)return '—'; try{return new Date(str).toLocaleString('fr-FR');}catch{return str;} }
+function initials(name) { return (name||'?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase(); }
+
+// ============================================================
+// AUTH STATE
+// ============================================================
+let TOKEN = localStorage.getItem('jedi_token') || '';
+let CURRENT_USER = null;
+
+async function api(method, endpoint, body) {
+  const opts = { method, headers:{ 'Content-Type':'application/json' } };
+  if (TOKEN) opts.headers['Authorization'] = 'Bearer ' + TOKEN;
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API_BASE + '/api' + endpoint, opts);
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+  return data;
+}
+
+function toast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (err?' error':'');
+  setTimeout(()=>t.className='toast',2800);
+}
+
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  if (!username||!password) { showLoginErr('Remplis tous les champs'); return; }
+  btn.innerHTML = '<span class="spinner"></span> Connexion...';
+  btn.disabled = true;
+  errEl.style.display = 'none';
+  try {
+    const data = await api('POST','/auth/login',{username,password});
+    TOKEN = data.token;
+    CURRENT_USER = data.user;
+    localStorage.setItem('jedi_token', TOKEN);
+    showApp();
+  } catch(e) {
+    showLoginErr(e.message);
+  } finally {
+    btn.innerHTML = 'Se connecter'; btn.disabled = false;
+  }
+}
+
+function showLoginErr(msg) {
+  const e = document.getElementById('login-error');
+  e.textContent = '⚠ ' + msg; e.style.display = 'block';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter' && document.getElementById('login-screen').style.display!=='none') doLogin();
+});
+
+function doLogout() {
+  TOKEN = ''; CURRENT_USER = null;
+  localStorage.removeItem('jedi_token');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  const membre = CURRENT_USER.membre;
+  document.getElementById('user-display-name').textContent = CURRENT_USER.username;
+  if (membre) {
+    document.getElementById('user-display-rank').textContent = getRank(membre.rank).label;
+  } else {
+    document.getElementById('user-display-rank').textContent = CURRENT_USER.role === 'admin' ? 'Administrateur' : 'Membre';
+  }
+  // Admin nav
+  if (CURRENT_USER.role === 'admin' || CURRENT_USER.role === 'maitre') {
+    document.getElementById('nav-admin').style.display = 'flex';
+  }
+  navigate('accueil');
+}
+
+async function checkToken() {
+  if (!TOKEN) return;
+  try {
+    const data = await api('GET','/auth/me');
+    CURRENT_USER = data;
+    showApp();
+  } catch {
+    TOKEN = ''; localStorage.removeItem('jedi_token');
+  }
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+let currentPage = 'accueil';
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const nav = document.getElementById('nav-'+page);
+  if (nav) nav.classList.add('active');
+  renderPage(page);
+}
+async function renderPage(page) {
+  const main = document.getElementById('main-content');
+  main.innerHTML = '<div class="content"><div class="empty-state"><div class="spinner" style="width:24px;height:24px;margin:0 auto 12px"></div><p>Chargement...</p></div></div>';
+  const pages = {
+    accueil, holocom, missions, membres, recensements,
+    formations, pouvoirs, rapports, traques, prison,
+    casier, promotions, admin, profil
+  };
+  try {
+    if (pages[page]) await pages[page]();
+    else main.innerHTML = '<div class="content"><div class="empty-state"><div class="empty-icon">◈</div><p>Page inconnue</p></div></div>';
+  } catch(e) {
+    main.innerHTML = `<div class="content"><div class="empty-state"><div class="empty-icon">⊗</div><p>Erreur: ${e.message}</p></div></div>`;
+  }
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(title, bodyHtml, onConfirm) {
+  const btns = onConfirm
+    ? `<button class="btn btn-primary" id="modal-confirm-btn" onclick="(${onConfirm.toString()})()">Confirmer</button><button class="btn btn-danger" onclick="closeModal()">Annuler</button>`
+    : `<button class="btn btn-primary" onclick="closeModal()">Fermer</button>`;
+  document.getElementById('modal-container').innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal"><div class="modal-title">${title}</div>${bodyHtml}<div class="modal-actions">${btns}</div></div>
+    </div>`;
+}
+function closeModal() { document.getElementById('modal-container').innerHTML=''; }
+
+// ============================================================
+// ACCUEIL
+// ============================================================
+async function accueil() {
+  const [stats, holocoms, missions_list, promotions_list] = await Promise.all([
+    api('GET','/stats'),
+    api('GET','/holocom'),
+    api('GET','/missions'),
+    api('GET','/promotions')
+  ]);
+  const actives = missions_list.filter(m=>m.status==='en-cours').slice(0,3);
+  const recents = holocoms.slice(0,4);
+  const promos = promotions_list.slice(0,5);
+
+  document.getElementById('main-content').innerHTML = `
+  <div class="page-header">
+    <div><div class="page-title">Tableau de Bord</div><div class="page-sub">◈ ORDRE JEDI — TEMPLE DE CORUSCANT ◈</div></div>
+    <div style="font-family:'Orbitron',monospace;font-size:11px;color:var(--text-muted)">${new Date().toLocaleString('fr-FR')}</div>
+  </div>
+  <div class="content">
+    <div class="stats-grid">
+      <div class="stat-card" style="--accent:#c9a84c"><span class="stat-value">${stats.membres}</span><span class="stat-label">Membres</span></div>
+      <div class="stat-card" style="--accent:#4a8fcc"><span class="stat-value">${stats.membres_actifs}</span><span class="stat-label">Actifs</span></div>
+      <div class="stat-card" style="--accent:#5acc88"><span class="stat-value">${stats.missions_actives}</span><span class="stat-label">Missions actives</span></div>
+      <div class="stat-card" style="--accent:#e05555"><span class="stat-value">${stats.traques}</span><span class="stat-label">Traques actives</span></div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-title">◉ Transmissions récentes</div>
+          <div class="scrollable">
+            ${recents.length ? recents.map(h=>`
+              <div class="holocom-msg ${h.type}">
+                <div style="font-weight:700;font-size:13px;color:${h.type==='conseil'?'var(--gold)':h.type==='maitre'?'#aa88ee':'var(--blue-light)'}">${h.sender}</div>
+                <div style="font-size:13px;color:var(--text-secondary);margin:4px 0">${h.text.substring(0,120)}${h.text.length>120?'...':''}</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'Orbitron',monospace">${fmtDateTime(h.created_at)}</div>
+              </div>`).join('') : '<div class="empty-state"><p>Aucune transmission</p></div>'}
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">◎ Missions en cours</div>
+          ${actives.length ? actives.map(m=>`
+            <div class="mission-card">
+              <div class="flex-between"><div style="font-weight:700;font-size:14px">${m.title}</div>${badgeMission(m.priority)}</div>
+              <div style="font-size:12px;color:var(--text-muted);margin:6px 0">${(m.description||'').substring(0,80)}${m.description&&m.description.length>80?'...':''}</div>
+              <div class="flex-between"><span style="font-size:11px;color:var(--text-muted)">→ ${m.assignee||'Non assigné'}</span><span class="badge badge-blue" style="font-size:10px">${m.type}</span></div>
+            </div>`).join('') : '<div class="empty-state"><p>Aucune mission active</p></div>'}
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">✦ Dernières promotions</div>
+          ${promos.length ? promos.map(p=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+              <div><div style="font-size:13px;font-weight:600">${p.membre}</div><div style="font-size:11px;color:var(--text-muted)">${fmtDate(p.created_at)} — par ${p.promoteur}</div></div>
+              <div>${badgeHtml(p.rank_new)}</div>
+            </div>`).join('') : '<div class="empty-state"><p>Aucune promotion</p></div>'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// HOLOCOM
+// ============================================================
+async function holocom() {
+  const msgs = await api('GET','/holocom');
+  const isAdmin = CURRENT_USER.role==='admin'||CURRENT_USER.role==='maitre';
+  document.getElementById('main-content').innerHTML = `
+  <div class="page-header">
+    <div><div class="page-title">Holocommunicateur</div><div class="page-sub">Transmissions sécurisées</div></div>
+    <button class="btn btn-primary" onclick="openNewHolocom()">+ Nouvelle Transmission</button>
+  </div>
+  <div class="content">
+    <div class="tab-bar">
+      <div class="tab active" onclick="filterTabHolo('all',this)">Toutes</div>
+      <div class="tab" onclick="filterTabHolo('conseil',this)">Haut Conseil</div>
+      <div class="tab" onclick="filterTabHolo('maitre',this)">Maîtres</div>
+      <div class="tab" onclick="filterTabHolo('info',this)">Informations</div>
+    </div>
+    <div id="holo-list">${renderHoloList(msgs,'all',isAdmin)}</div>
+  </div>`;
+  window._holoMsgs = msgs;
+  window._holoAdmin = isAdmin;
+}
+function renderHoloList(msgs,filter,isAdmin){
+  const list = filter==='all'?msgs:msgs.filter(m=>m.type===filter);
+  if(!list.length) return '<div class="empty-state"><div class="empty-icon">◉</div><p>Aucune transmission</p></div>';
+  return list.map(h=>`
+    <div class="card" style="margin-bottom:12px;padding:16px">
+      <div class="flex-between" style="margin-bottom:8px">
+        <div class="flex gap-8">
+          <div style="font-weight:700;font-size:14px;color:${h.type==='conseil'?'var(--gold)':h.type==='maitre'?'#aa88ee':'var(--blue-light)'}">${h.sender}</div>
+          <span class="badge ${h.type==='conseil'?'badge-gold':h.type==='maitre'?'badge-purple':'badge-blue'}">${h.type==='conseil'?'Haut Conseil':h.type==='maitre'?'Maître':'Info'}</span>
+        </div>
+        <div class="flex gap-8">
+          <span style="font-size:11px;font-family:'Orbitron',monospace;color:var(--text-muted)">${fmtDateTime(h.created_at)}</span>
+          ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="delHolo('${h.id}')">✕</button>`:''}
+        </div>
+      </div>
+      <div style="font-size:14px;color:var(--text-secondary);line-height:1.6">${h.text}</div>
+    </div>`).join('');
+}
+function filterTabHolo(f,el){ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); document.getElementById('holo-list').innerHTML=renderHoloList(window._holoMsgs,f,window._holoAdmin); }
+async function delHolo(id){ if(!confirm('Supprimer?'))return; try{await api('DELETE','/holocom/'+id); toast('Transmission supprimée'); navigate('holocom');}catch(e){toast(e.message,true);} }
+function openNewHolocom(){
+  openModal('Nouvelle Transmission',`
+    <div class="form-group"><label class="form-label">Canal</label><select class="form-select" id="hc-type"><option value="info">Information générale</option><option value="maitre">Canal Maîtres</option><option value="conseil">Haut Conseil</option></select></div>
+    <div class="form-group" style="margin-top:14px"><label class="form-label">Message</label><textarea class="form-textarea" id="hc-text" style="min-height:120px" placeholder="Votre transmission..."></textarea></div>
+  `, async()=>{
+    const text=document.getElementById('hc-text').value.trim();
+    if(!text)return toast('Message requis',true);
+    const btn=document.getElementById('modal-confirm-btn'); btn.disabled=true;
+    try{ await api('POST','/holocom',{text,type:document.getElementById('hc-type').value}); closeModal(); toast('Transmission envoyée ✓'); navigate('holocom'); }
+    catch(e){ toast(e.message,true); btn.disabled=false; }
+  });
+}
+
+// ============================================================
+// MISSIONS
+// ============================================================
+async function missions(){
+  const list = await api('GET','/missions');
+  const isAdmin = CURRENT_USER.role==='admin'||CURRENT_USER.role==='maitre';
+  window._missions=list; window._mAdmin=isAdmin;
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header">
+    <div><div class="page-title">Missions</div><div class="page-sub">Gestion des opérations — ${list.length} au total</div></div>
+    <button class="btn btn-primary" onclick="openNewMission()">+ Nouvelle Mission</button>
+  </div>
+  <div class="content">
+    <div class="tab-bar">
+      <div class="tab active" onclick="filterMiss('all',this)">Toutes</div>
+      <div class="tab" onclick="filterMiss('planifiée',this)">Planifiées</div>
+      <div class="tab" onclick="filterMiss('en-cours',this)">En cours</div>
+      <div class="tab" onclick="filterMiss('terminée',this)">Terminées</div>
+    </div>
+    <div id="miss-list">${renderMissList(list,'all',isAdmin)}</div>
+  </div>`;
+}
+function renderMissList(list,filter,isAdmin){
+  const items=filter==='all'?list:list.filter(m=>m.status===filter);
+  const sm={'planifiée':'badge-blue','en-cours':'badge-gold','terminée':'badge-green','échouée':'badge-red','archivée':'badge-gray'};
+  if(!items.length) return '<div class="empty-state"><div class="empty-icon">◎</div><p>Aucune mission</p></div>';
+  return items.map(m=>`
+    <div class="card" style="margin-bottom:12px">
+      <div class="flex-between" style="margin-bottom:10px">
+        <div class="flex gap-8"><span style="font-weight:700;font-size:15px">${m.title}</span><span class="badge ${sm[m.status]||'badge-gray'}">${m.status}</span>${badgeMission(m.priority)}</div>
+        ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="delMission('${m.id}')">✕</button>`:''}
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px">${m.description||'—'}</div>
+      <div class="flex-between">
+        <div class="flex gap-12" style="font-size:12px;color:var(--text-muted)">
+          <span>Type: <strong style="color:var(--text-secondary)">${m.type}</strong></span>
+          <span>Assigné: <strong style="color:var(--text-secondary)">${m.assignee||'—'}</strong></span>
+          <span>Par: ${m.created_by||'—'}</span>
+        </div>
+        <select class="form-select" style="width:140px;padding:4px 8px;font-size:12px" onchange="updateMission('${m.id}',this.value,${JSON.stringify(m).replace(/"/g,'&quot;')})">
+          <option ${m.status==='planifiée'?'selected':''}>planifiée</option>
+          <option ${m.status==='en-cours'?'selected':''}>en-cours</option>
+          <option ${m.status==='terminée'?'selected':''}>terminée</option>
+          <option ${m.status==='échouée'?'selected':''}>échouée</option>
+          <option ${m.status==='archivée'?'selected':''}>archivée</option>
+        </select>
+      </div>
+    </div>`).join('');
+}
+function filterMiss(f,el){ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); document.getElementById('miss-list').innerHTML=renderMissList(window._missions,f,window._mAdmin); }
+async function updateMission(id,status,m){ try{ await api('PUT','/missions/'+id,{...m,status}); window._missions=window._missions.map(x=>x.id===id?{...x,status}:x); }catch(e){toast(e.message,true);} }
+async function delMission(id){ if(!confirm('Supprimer cette mission?'))return; try{await api('DELETE','/missions/'+id);toast('Mission supprimée');navigate('missions');}catch(e){toast(e.message,true);} }
+function openNewMission(){
+  api('GET','/membres').then(membres=>{
+    openModal('Nouvelle Mission',`
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="m-title" placeholder="Nom de la mission"></div>
+        <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="m-type">${MISSION_TYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Priorité</label><select class="form-select" id="m-prio"><option value="normale">Normale</option><option value="haute">Haute</option><option value="urgente">Urgente</option></select></div>
+        <div class="form-group"><label class="form-label">Jedi assigné</label><select class="form-select" id="m-ass"><option value="">— Sélectionner —</option>${membres.map(m=>`<option>${m.name}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="m-desc" placeholder="Détails de la mission..."></textarea></div>
+    `, async()=>{
+      const title=document.getElementById('m-title').value.trim();
+      if(!title)return toast('Titre requis',true);
+      const btn=document.getElementById('modal-confirm-btn'); btn.disabled=true;
+      try{ await api('POST','/missions',{title,type:document.getElementById('m-type').value,priority:document.getElementById('m-prio').value,assignee:document.getElementById('m-ass').value,description:document.getElementById('m-desc').value}); closeModal();toast('Mission créée ✓');navigate('missions'); }
+      catch(e){ toast(e.message,true); btn.disabled=false; }
+    });
+  });
+}
+
+// ============================================================
+// MEMBRES
+// ============================================================
+async function membres(){
+  const list = await api('GET','/membres');
+  window._membres = list;
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header">
+    <div><div class="page-title">Membres de l'Ordre</div><div class="page-sub">${list.length} Jedi recensés</div></div>
+    <div class="flex gap-8">
+      <input class="search-bar" id="srch-m" oninput="filterMembres()" placeholder="Rechercher...">
+      <button class="btn btn-primary" onclick="openNewMembre()">+ Nouveau Membre</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="membres-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px">
+      ${list.map(membreCard).join('')}
+    </div>
+  </div>`;
+}
+function membreCard(m){
+  return `<div class="member-card" onclick="openMembreDetail('${m.id}')">
+    <div class="member-avatar">${m.photo?`<img src="${m.photo}" alt="">`:`<span style="color:var(--gold);font-family:'Cinzel',serif;font-size:16px">${initials(m.name)}</span>`}</div>
+    <div class="member-name">${m.name}</div>
+    <div style="margin-bottom:8px">${badgeHtml(m.rank)}</div>
+    ${m.spec?`<div style="font-size:11px;color:var(--text-muted)">Spéc: ${m.spec}</div>`:''}
+    ${m.mestre?`<div style="font-size:11px;color:var(--text-muted)">Maître: ${m.mestre}</div>`:''}
+    <div style="margin-top:6px"><span class="badge ${m.status==='actif'?'badge-green':'badge-gray'}">${m.status}</span></div>
+  </div>`;
+}
+function filterMembres(){
+  const q=document.getElementById('srch-m').value.toLowerCase();
+  const filtered=window._membres.filter(m=>m.name.toLowerCase().includes(q)||getRank(m.rank).label.toLowerCase().includes(q));
+  document.getElementById('membres-grid').innerHTML=filtered.map(membreCard).join('')||'<div class="empty-state"><p>Aucun résultat</p></div>';
+}
+function openMembreDetail(id){
+  const m=window._membres.find(x=>x.id===id); if(!m)return;
+  const isAdmin=CURRENT_USER.role==='admin'||CURRENT_USER.role==='maitre';
+  openModal(m.name,`
+    <div style="text-align:center;margin-bottom:20px">
+      <div class="member-avatar" style="width:80px;height:80px;margin:0 auto 12px;font-size:28px">${m.photo?`<img src="${m.photo}" alt="">`:`<span style="color:var(--gold);font-family:'Cinzel',serif">${initials(m.name)}</span>`}</div>
+      ${badgeHtml(m.rank)}
+    </div>
+    <table class="data-table">
+      <tr><td style="color:var(--text-muted)">Spécialisation</td><td>${m.spec||'—'}</td></tr>
+      <tr><td style="color:var(--text-muted)">Maître</td><td>${m.mestre||'—'}</td></tr>
+      <tr><td style="color:var(--text-muted)">Statut</td><td><span class="badge ${m.status==='actif'?'badge-green':'badge-gray'}">${m.status}</span></td></tr>
+      <tr><td style="color:var(--text-muted)">Depuis</td><td>${fmtDate(m.created_at)}</td></tr>
+    </table>
+    ${m.bio?`<div style="margin-top:14px;padding:12px;background:var(--bg-deep);border-radius:6px;font-size:13px;color:var(--text-secondary);line-height:1.6">${m.bio}</div>`:''}
+    <div style="display:flex;gap:8px;margin-top:16px">
+      ${isAdmin?`<button class="btn btn-primary" style="flex:1" onclick="closeModal();openEditMembre('${id}')">Modifier</button>`:''}
+      ${isAdmin?`<button class="btn btn-danger" onclick="if(confirm('Supprimer ce membre ?')){delMembre('${id}');}">Supprimer</button>`:''}
+      ${!isAdmin?`<button class="btn btn-primary" onclick="closeModal()">Fermer</button>`:''}
+    </div>
+  `,null);
+}
+async function delMembre(id){ try{await api('DELETE','/membres/'+id);closeModal();toast('Membre supprimé');navigate('membres');}catch(e){toast(e.message,true);} }
+function openNewMembre(){
+  api('GET','/membres').then(all=>{
+    openModal('Nouveau Membre',`
+      <div style="text-align:center;margin-bottom:16px">
+        <div class="photo-upload-area" onclick="document.getElementById('ph-inp').click()">
+          <div id="ph-box"><div style="font-size:24px;opacity:0.4;margin-bottom:6px">◈</div><div style="font-size:12px;color:var(--text-muted)">Cliquer pour ajouter une photo</div></div>
+        </div>
+        <input type="file" id="ph-inp" accept="image/*" style="display:none" onchange="previewPh(this,'ph-data','ph-box')">
+        <input type="hidden" id="ph-data">
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="m-name" placeholder="Nom complet du personnage"></div>
+        <div class="form-group"><label class="form-label">Grade</label><select class="form-select" id="m-rank">${RANKS.map(r=>`<option value="${r.id}">${r.label}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Spécialisation</label><select class="form-select" id="m-spec"><option value="">— Aucune —</option>${SPECS.map(s=>`<option>${s}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Maître Jedi</label><select class="form-select" id="m-maître"><option value="">— Aucun —</option>${all.map(m=>`<option>${m.name}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Biographie</label><textarea class="form-textarea" id="m-bio" placeholder="Histoire du personnage..."></textarea></div>
+    `, async()=>{
+      const name=document.getElementById('m-name').value.trim();
+      if(!name)return toast('Nom requis',true);
+      const btn=document.getElementById('modal-confirm-btn'); btn.disabled=true;
+      try{
+        await api('POST','/membres',{name,rank:document.getElementById('m-rank').value,spec:document.getElementById('m-spec').value,mestre:document.getElementById('m-maître').value,bio:document.getElementById('m-bio').value,photo:document.getElementById('ph-data').value});
+        closeModal();toast('Membre ajouté ✓');navigate('membres');
+      }catch(e){toast(e.message,true);btn.disabled=false;}
+    });
+  });
+}
+function openEditMembre(id){
+  api('GET','/membres').then(all=>{
+    const m=all.find(x=>x.id===id);
+    openModal('Modifier '+m.name,`
+      <div style="text-align:center;margin-bottom:16px">
+        <div class="photo-upload-area" onclick="document.getElementById('ph-inp-e').click()">
+          <div id="ph-box-e">${m.photo?`<img class="photo-preview" src="${m.photo}" alt="">`:'<div style="font-size:24px;opacity:0.4">◈</div>'}<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Modifier la photo</div></div>
+        </div>
+        <input type="file" id="ph-inp-e" accept="image/*" style="display:none" onchange="previewPh(this,'ph-data-e','ph-box-e')">
+        <input type="hidden" id="ph-data-e" value="${m.photo||''}">
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="me-name" value="${m.name}"></div>
+        <div class="form-group"><label class="form-label">Grade</label><select class="form-select" id="me-rank">${RANKS.map(r=>`<option value="${r.id}" ${m.rank===r.id?'selected':''}>${r.label}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Spécialisation</label><select class="form-select" id="me-spec"><option value="">— Aucune —</option>${SPECS.map(s=>`<option ${m.spec===s?'selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Statut</label><select class="form-select" id="me-status"><option ${m.status==='actif'?'selected':''}>actif</option><option ${m.status==='inactif'?'selected':''}>inactif</option><option ${m.status==='disparu'?'selected':''}>disparu</option><option ${m.status==='tombé'?'selected':''}>tombé</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Biographie</label><textarea class="form-textarea" id="me-bio">${m.bio||''}</textarea></div>
+    `, async()=>{
+      const btn=document.getElementById('modal-confirm-btn'); btn.disabled=true;
+      try{
+        await api('PUT','/membres/'+id,{name:document.getElementById('me-name').value,rank:document.getElementById('me-rank').value,spec:document.getElementById('me-spec').value,mestre:m.mestre,bio:document.getElementById('me-bio').value,photo:document.getElementById('ph-data-e').value,status:document.getElementById('me-status').value});
+        closeModal();toast('Membre mis à jour ✓');navigate('membres');
+      }catch(e){toast(e.message,true);btn.disabled=false;}
+    });
+  });
+}
+function previewPh(input,dataId,boxId){
+  if(!input.files[0])return;
+  const r=new FileReader();
+  r.onload=e=>{document.getElementById(dataId).value=e.target.result;document.getElementById(boxId).innerHTML=`<img class="photo-preview" src="${e.target.result}" alt=""><div style="font-size:11px;color:var(--text-muted);margin-top:4px">Photo sélectionnée</div>`;};
+  r.readAsDataURL(input.files[0]);
+}
+
+// ============================================================
+// RECENSEMENTS
+// ============================================================
+async function recensements(){
+  const list=await api('GET','/membres');
+  window._recList=list; window._recTier='all'; window._recQ='';
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header">
+    <div><div class="page-title">Fiches Jedi</div><div class="page-sub">Recensements officiels de l'Ordre</div></div>
+    <input class="search-bar" id="srch-rec" oninput="srchRec()" placeholder="Rechercher...">
+  </div>
+  <div class="content">
+    <div class="tab-bar">
+      <div class="tab active" onclick="tierRec('all',this)">Tous</div>
+      <div class="tab" onclick="tierRec('apprenti',this)">Apprentis</div>
+      <div class="tab" onclick="tierRec('domaine',this)">Domaine</div>
+      <div class="tab" onclick="tierRec('spec',this)">Spécialisation</div>
+      <div class="tab" onclick="tierRec('maitre',this)">Maîtres</div>
+      <div class="tab" onclick="tierRec('conseil',this)">Conseil</div>
+    </div>
+    <div id="rec-tbl">${recTable(list,'all','')}</div>
+  </div>`;
+}
+function recTable(list,tier,q){
+  let items=list;
+  if(q) items=items.filter(m=>m.name.toLowerCase().includes(q));
+  if(tier!=='all') items=items.filter(m=>{const t=getRank(m.rank).tier;if(tier==='maitre')return['maitre','maitre-spec'].includes(t);if(tier==='spec')return['spec','grande-spec'].includes(t);return t===tier;});
+  if(!items.length) return '<div class="empty-state"><div class="empty-icon">◇</div><p>Aucun membre</p></div>';
+  return `<div class="card"><table class="data-table"><thead><tr><th>Photo</th><th>Nom</th><th>Grade</th><th>Spéc.</th><th>Maître</th><th>Statut</th><th>Depuis</th></tr></thead><tbody>
+    ${items.map(m=>`<tr onclick="openMembreDetail2('${m.id}')" style="cursor:pointer">
+      <td><div style="width:36px;height:36px;border-radius:50%;background:var(--bg-hover);border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:12px;color:var(--gold)">${m.photo?`<img src="${m.photo}" style="width:100%;height:100%;object-fit:cover">`:initials(m.name)}</div></td>
+      <td style="font-weight:600">${m.name}</td><td>${badgeHtml(m.rank)}</td><td>${m.spec||'—'}</td>
+      <td style="color:var(--text-muted)">${m.mestre||'—'}</td>
+      <td><span class="badge ${m.status==='actif'?'badge-green':'badge-gray'}">${m.status}</span></td>
+      <td style="color:var(--text-muted)">${fmtDate(m.created_at)}</td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+}
+function tierRec(t,el){window._recTier=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');document.getElementById('rec-tbl').innerHTML=recTable(window._recList,t,window._recQ);}
+function srchRec(){window._recQ=document.getElementById('srch-rec').value.toLowerCase();document.getElementById('rec-tbl').innerHTML=recTable(window._recList,window._recTier,window._recQ);}
+function openMembreDetail2(id){window._membres=window._recList;openMembreDetail(id);}
+
+// ============================================================
+// FORMATIONS
+// ============================================================
+async function formations(){
+  const list=await api('GET','/formations');
+  const isAdmin=CURRENT_USER.role==='admin'||CURRENT_USER.role==='maitre';
+  window._formations=list;
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header"><div><div class="page-title">Formations</div><div class="page-sub">Sessions d'enseignement Jedi</div></div><button class="btn btn-primary" onclick="openNewFormation()">+ Nouvelle Formation</button></div>
+  <div class="content"><div id="form-list">${formList(list,isAdmin)}</div></div>`;
+  window._fAdmin=isAdmin;
+}
+function formList(list,isAdmin){
+  if(!list.length)return'<div class="empty-state"><div class="empty-icon">◈</div><p>Aucune formation</p></div>';
+  return list.map(f=>`
+    <div class="card" style="margin-bottom:12px">
+      <div class="flex-between" style="margin-bottom:8px"><div class="flex gap-8"><span style="font-weight:700;font-size:15px">${f.title}</span><span class="badge badge-blue">${f.type}</span></div>${isAdmin?`<button class="btn btn-danger btn-sm" onclick="delFormation('${f.id}')">✕</button>`:''}</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">${f.description||'—'}</div>
+      <div class="flex gap-12" style="font-size:12px;color:var(--text-muted)"><span>Instructeur: <strong style="color:var(--text-secondary)">${f.instructeur||'—'}</strong></span><span>Participants: <strong style="color:var(--text-secondary)">${f.participants||'—'}</strong></span><span>${fmtDate(f.created_at)}</span></div>
+    </div>`).join('');
+}
+async function delFormation(id){if(!confirm('Supprimer?'))return;try{await api('DELETE','/formations/'+id);toast('Supprimé');navigate('formations');}catch(e){toast(e.message,true);}}
+function openNewFormation(){
+  api('GET','/membres').then(membres=>{
+    openModal('Nouvelle Formation',`
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="f-title" placeholder="Intitulé"></div>
+        <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="f-type"><option>Combat au sabre</option><option>Méditation de Force</option><option>Infiltration</option><option>Diplomatie</option><option>Guérison</option><option>Pilotage</option><option>Théorie Jedi</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Instructeur</label><select class="form-select" id="f-inst"><option value="">— Aucun —</option>${membres.map(m=>`<option>${m.name}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Participants</label><input class="form-input" id="f-part" placeholder="Noms séparés par des virgules"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="f-desc" placeholder="Contenu de la formation..."></textarea></div>
+    `,async()=>{
+      const title=document.getElementById('f-title').value.trim();
+      if(!title)return toast('Titre requis',true);
+      const btn=document.getElementById('modal-confirm-btn');btn.disabled=true;
+      try{await api('POST','/formations',{title,type:document.getElementById('f-type').value,instructeur:document.getElementById('f-inst').value,participants:document.getElementById('f-part').value,description:document.getElementById('f-desc').value});closeModal();toast('Formation créée ✓');navigate('formations');}
+      catch(e){toast(e.message,true);btn.disabled=false;}
+    });
+  });
+}
+
+// ============================================================
+// POUVOIRS
+// ============================================================
+async function pouvoirs(){
+  const list=await api('GET','/pouvoirs');
+  const isAdmin=CURRENT_USER.role==='admin'||CURRENT_USER.role==='maitre';
+  window._pouvList=list;
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header"><div><div class="page-title">Registre des Pouvoirs</div><div class="page-sub">Compétences de Force recensées</div></div><button class="btn btn-primary" onclick="openNewPouvoir()">+ Enregistrer</button></div>
+  <div class="content"><div id="pouv-list">${pouvoirTable(list,isAdmin)}</div></div>`;
+  window._pAdmin=isAdmin;
+}
+function pouvoirTable(list,isAdmin){
+  if(!list.length)return'<div class="empty-state"><div class="empty-icon">⊕</div><p>Aucun pouvoir recensé</p></div>';
+  return`<div class="card"><table class="data-table"><thead><tr><th>Jedi</th><th>Pouvoir</th><th>Niveau</th><th>Validé par</th><th>Date</th>${isAdmin?'<th></th>':''}</tr></thead><tbody>
+    ${list.map(p=>`<tr><td style="font-weight:600">${p.membre}</td><td>${p.pouvoir}</td><td><span class="badge ${p.niveau==='Maître'?'badge-gold':p.niveau==='Avancé'?'badge-blue':'badge-gray'}">${p.niveau}</span></td><td style="color:var(--text-muted)">${p.validateur||'—'}</td><td style="color:var(--text-muted)">${fmtDate(p.created_at)}</td>${isAdmin?`<td><button class="btn btn-danger btn-sm" onclick="delPouvoir('${p.id}')">✕</button></td>`:''}</tr>`).join('')}
+  </tbody></table></div>`;
+}
+async function delPouvoir(id){if(!confirm('Supprimer?'))return;try{await api('DELETE','/pouvoirs/'+id);toast('Supprimé');navigate('pouvoirs');}catch(e){toast(e.message,true);}}
+function openNewPouvoir(){
+  api('GET','/membres').then(membres=>{
+    const validateurs=membres.filter(m=>['maitre-jedi','maitre-ordre','haut-conseil','maitre-ombres','maitre-sentinelles','maitre-gardiens','maitre-erudits'].includes(m.rank));
+    openModal('Enregistrer un Pouvoir',`
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Jedi</label><select class="form-select" id="p-m">${membres.map(m=>`<option>${m.name}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Pouvoir</label><select class="form-select" id="p-p">${POUVOIRS_LIST.map(p=>`<option>${p}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Niveau</label><select class="form-select" id="p-n"><option>Initié</option><option>Intermédiaire</option><option>Avancé</option><option>Maître</option></select></div>
+        <div class="form-group"><label class="form-label">Validé par</label><select class="form-select" id="p-v"><option value="">— Aucun —</option>${validateurs.map(m=>`<option>${m.name}</option>`).join('')}</select></div>
+      </div>
+    `,async()=>{
+      const btn=document.getElementById('modal-confirm-btn');btn.disabled=true;
+      try{await api('POST','/pouvoirs',{membre:document.getElementById('p-m').value,pouvoir:document.getElementById('p-p').value,niveau:document.getElementById('p-n').value,validateur:document.getElementById('p-v').value});closeModal();toast('Pouvoir enregistré ✓');navigate('pouvoirs');}
+      catch(e){toast(e.message,true);btn.disabled=false;}
+    });
+  });
+}
+
+// ============================================================
+// RAPPORTS
+// ============================================================
+async function rapports(){
+  const list=await api('GET','/rapports');
+  const isAdmin=CURRENT_USER.role==='admin'||CURRENT_USER.role==='maitre';
+  window._raps=list; window._rAdmin=isAdmin;
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header"><div><div class="page-title">Rapports</div><div class="page-sub">Rapports officiels de la Faction</div></div><button class="btn btn-primary" onclick="openNewRapport()">+ Nouveau Rapport</button></div>
+  <div class="content">
+    <div class="tab-bar"><div class="tab active" onclick="filterRaps('all',this)">Tous</div>${RAPPORT_TYPES.map(t=>`<div class="tab" onclick="filterRaps('${t}',this)">${t}</div>`).join('')}</div>
+    <div id="raps-list">${rapsList(list,'all',isAdmin)}</div>
+  </div>`;
+}
+function rapsList(list,filter,isAdmin){
+  const items=filter==='all'?list:list.filter(r=>r.type===filter);
+  if(!items.length)return'<div class="empty-state"><div class="empty-icon">▤</div><p>Aucun rapport</p></div>';
+  return items.map(r=>`
+    <div class="report-item" onclick="openRapport('${r.id}')">
+      <div class="flex-between"><div style="font-weight:600;font-size:14px">${r.title}</div><div class="flex gap-8"><span class="badge badge-blue">${r.type}</span>${isAdmin?`<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();delRapport('${r.id}')">✕</button>`:''}</div></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;display:flex;gap:16px"><span>Par: ${r.auteur}</span><span>${fmtDate(r.created_at)}</span>${r.personnes?`<span>Impliqués: ${r.personnes}</span>`:''}</div>
+    </div>`).join('');
+}
+function filterRaps(f,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('raps-list').innerHTML=rapsList(window._raps,f,window._rAdmin);}
+function openRapport(id){
+  const r=window._raps.find(x=>x.id===id);
+  openModal(r.title,`
+    <div class="flex gap-8" style="margin-bottom:14px"><span class="badge badge-blue">${r.type}</span><span style="font-size:12px;color:var(--text-muted)">Par: ${r.auteur} — ${fmtDate(r.created_at)}</span></div>
+    <div style="background:var(--bg-deep);padding:16px;border-radius:8px;font-size:13px;line-height:1.8;color:var(--text-secondary);white-space:pre-wrap">${r.contenu||'—'}</div>
+    ${r.personnes?`<div style="margin-top:12px;font-size:12px"><span style="color:var(--text-muted)">Personnes impliquées:</span> ${r.personnes}</div>`:''}
+  `,null);
+}
+async function delRapport(id){if(!confirm('Supprimer?'))return;try{await api('DELETE','/rapports/'+id);toast('Supprimé');navigate('rapports');}catch(e){toast(e.message,true);}}
+function openNewRapport(){
+  openModal('Nouveau Rapport',`
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="r-title" placeholder="Titre du rapport"></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="r-type">${RAPPORT_TYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Personnes impliquées</label><input class="form-input" id="r-perso" placeholder="Noms séparés par des virgules"></div>
+    <div class="form-group" style="margin-top:14px"><label class="form-label">Contenu du rapport</label><textarea class="form-textarea" id="r-cont" style="min-height:160px" placeholder="Rapport détaillé..."></textarea></div>
+  `,async()=>{
+    const title=document.getElementById('r-title').value.trim();
+    if(!title)return toast('Titre requis',true);
+    const btn=document.getElementById('modal-confirm-btn');btn.disabled=true;
+    try{await api('POST','/rapports',{title,type:document.getElementById('r-type').value,contenu:document.getElementById('r-cont').value,personnes:document.getElementById('r-perso').value});closeModal();toast('Rapport créé ✓');navigate('rapports');}
+    catch(e){toast(e.message,true);btn.disabled=false;}
+  });
+}
+
+// ============================================================
+// TRAQUES
+// ============================================================
+async function traques(){
+  const list=await api('GET','/traques');
+  const isAdmin=CURRENT_USER.role==='admin'||CURRENT_USER.role==='maitre';
+  window._traq=list; window._tAdmin=isAdmin;
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header"><div><div class="page-title">Traques & Archives</div><div class="page-sub">Opérations de pistage</div></div><button class="btn btn-primary" onclick="openNewTraque()">+ Nouvelle Traque</button></div>
+  <div class="content">
+    <div class="tab-bar"><div class="tab active" onclick="filterTraq('all',this)">Toutes</div><div class="tab" onclick="filterTraq('active',this)">Actives</div><div class="tab" onclick="filterTraq('archivée',this)">Archivées</div></div>
+    <div id="traq-list">${traqList(list,'all',isAdmin)}</div>
+  </div>`;
+}
+function traqList(list,filter,isAdmin){
+  let items=list;
+  if(filter==='active')items=items.filter(t=>t.status!=='archivée');
+  if(filter==='archivée')items=items.filter(t=>t.status==='archivée');
+  if(!items.length)return'<div class="empty-state"><div class="empty-icon">◉</div><p>Aucune traque</p></div>';
+  return items.map(t=>`
+    <div class="card" style="margin-bottom:12px;border-color:${t.status==='active'?'var(--red-dark)':'var(--border)'}">
+      <div class="flex-between" style="margin-bottom:8px">
+        <div class="flex gap-8"><span style="font-weight:700;font-size:15px">${t.cible}</span><span class="badge ${t.status==='active'?'badge-red':t.status==='résolue'?'badge-green':'badge-gray'}">${t.status}</span><span class="badge badge-purple">${t.danger}</span></div>
+        <div class="flex gap-8">
+          <select class="form-select" style="width:130px;padding:4px 8px;font-size:12px" onchange="updateTraque('${t.id}',this.value)"><option ${t.status==='active'?'selected':''}>active</option><option ${t.status==='résolue'?'selected':''}>résolue</option><option ${t.status==='archivée'?'selected':''}>archivée</option></select>
+          ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="delTraque('${t.id}')">✕</button>`:''}
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">${t.description||'—'}</div>
+      <div class="flex gap-12" style="font-size:12px;color:var(--text-muted)"><span>Responsable: <strong style="color:var(--text-secondary)">${t.responsable||'—'}</strong></span><span>${fmtDate(t.created_at)}</span></div>
+    </div>`).join('');
+}
+function filterTraq(f,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('traq-list').innerHTML=traqList(window._traq,f,window._tAdmin);}
+async function updateTraque(id,status){try{await api('PUT','/traques/'+id,{status});window._traq=window._traq.map(t=>t.id===id?{...t,status}:t);}catch(e){toast(e.message,true);}}
+async function delTraque(id){if(!confirm('Supprimer?'))return;try{await api('DELETE','/traques/'+id);toast('Supprimé');navigate('traques');}catch(e){toast(e.message,true);}}
+function openNewTraque(){
+  api('GET','/membres').then(membres=>{
+    openModal('Nouvelle Traque',`
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Cible</label><input class="form-input" id="t-cible" placeholder="Nom de la cible"></div>
+        <div class="form-group"><label class="form-label">Niveau de danger</label><select class="form-select" id="t-dng"><option>Faible</option><option>Modéré</option><option>Élevé</option><option>Extrême</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Jedi responsable</label><select class="form-select" id="t-resp"><option value="">— Aucun —</option>${membres.map(m=>`<option>${m.name}</option>`).join('')}</select></div>
+      <div class="form-group" style="margin-top:14px"><label class="form-label">Description & informations</label><textarea class="form-textarea" id="t-desc" placeholder="Dernières positions connues, informations..."></textarea></div>
+    `,async()=>{
+      const cible=document.getElementById('t-cible').value.trim();
+      if(!cible)return toast('Cible requise',true);
+      const btn=document.getElementById('modal-confirm-btn');btn.disabled=true;
+      try{await api('POST','/traques',{cible,danger:document.getElementById('t-dng').value,responsable:document.getElementById('t-resp').value,description:document.getElementById('t-desc').value});closeModal();toast('Traque lancée ✓');navigate('traques');}
+      catch(e){toast(e.message,true);btn.disabled=false;}
+    });
+  });
+}
+
+// ============================================================
+// PRISON
+// ============================================================
+async function prison(){
+  const list=await api('GET','/prison');
+  const isAdmin=CURRENT_USER.role==='admin'||CURRENT_USER.role==='maitre';
+  window._pris=list; window._priAdmin=isAdmin;
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header"><div><div class="page-title">Registre des Prisons</div><div class="page-sub">Individus détenus par l'Ordre</div></div><button class="btn btn-primary" onclick="openNewPrison()">+ Nouvelle Détention</button></div>
+  <div class="content"><div id="pris-list">${prisList(list,isAdmin)}</div></div>`;
+}
+function prisList(list,isAdmin){
+  if(!list.length)return'<div class="empty-state"><div class="empty-icon">⊗</div><p>Aucun détenu</p></div>';
+  return list.map(p=>`
+    <div class="prison-entry">
+      <div class="flex-between" style="margin-bottom:8px">
+        <div><span style="font-weight:700;font-size:15px">${p.nom}</span><span class="badge badge-red" style="margin-left:10px">${p.statut}</span></div>
+        <div class="flex gap-8">
+          <select class="form-select" style="width:140px;padding:4px 8px;font-size:12px" onchange="updatePrison('${p.id}',this.value)"><option ${p.statut==='détenu'?'selected':''}>détenu</option><option ${p.statut==='libéré'?'selected':''}>libéré</option><option ${p.statut==='transféré'?'selected':''}>transféré</option><option ${p.statut==='évadé'?'selected':''}>évadé</option></select>
+          ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="delPrison('${p.id}')">✕</button>`:''}
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">Motif: ${p.motif||'—'}</div>
+      <div class="flex gap-12" style="font-size:12px;color:var(--text-muted)"><span>Arrêté par: ${p.arresteur||'—'}</span><span>${fmtDate(p.created_at)}</span></div>
+    </div>`).join('');
+}
+async function updatePrison(id,statut){try{await api('PUT','/prison/'+id,{statut});window._pris=window._pris.map(p=>p.id===id?{...p,statut}:p);}catch(e){toast(e.message,true);}}
+async function delPrison(id){if(!confirm('Supprimer?'))return;try{await api('DELETE','/prison/'+id);toast('Supprimé');navigate('prison');}catch(e){toast(e.message,true);}}
+function openNewPrison(){
+  api('GET','/membres').then(membres=>{
+    openModal('Nouvelle Détention',`
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nom du détenu</label><input class="form-input" id="pr-nom" placeholder="Nom complet"></div>
+        <div class="form-group"><label class="form-label">Arrêté par</label><select class="form-select" id="pr-arr"><option value="">— Aucun —</option>${membres.map(m=>`<option>${m.name}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Motif de détention</label><textarea class="form-textarea" id="pr-motif" placeholder="Crimes, raisons de l'arrestation..."></textarea></div>
+    `,async()=>{
+      const nom=document.getElementById('pr-nom').value.trim();
+      if(!nom)return toast('Nom requis',true);
+      const btn=document.getElementById('modal-confirm-btn');btn.disabled=true;
+      try{await api('POST','/prison',{nom,arresteur:document.getElementById('pr-arr').value,motif:document.getElementById('pr-motif').value});closeModal();toast('Détention enregistrée ✓');navigate('prison');}
+      catch(e){toast(e.message,true);btn.disabled=false;}
+    });
+  });
+}
+
+// ============================================================
+// CASIER
+// ============================================================
+async function casier(){
+  const list=await api('GET','/casiers');
+  const isAdmin=CURRENT_USER.role==='admin'||CURRENT_USER.role==='maitre';
+  window._casi=list; window._caAdmin=isAdmin;
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header"><div><div class="page-title">Casiers Judiciaires</div><div class="page-sub">Archives des infractions et sanctions</div></div><button class="btn btn-primary" onclick="openNewCasier()">+ Ajouter</button></div>
+  <div class="content">
+    <input class="search-bar" id="srch-cas" oninput="srchCasier()" placeholder="Rechercher un individu..." style="margin-bottom:16px;width:100%">
+    <div id="cas-list">${casierTable(list,isAdmin)}</div>
+  </div>`;
+}
+function casierTable(list,isAdmin){
+  if(!list.length)return'<div class="empty-state"><div class="empty-icon">▦</div><p>Aucun casier</p></div>';
+  return`<div class="card"><table class="data-table"><thead><tr><th>Individu</th><th>Infraction</th><th>Gravité</th><th>Sanction</th><th>Agent</th><th>Date</th>${isAdmin?'<th></th>':''}</tr></thead><tbody>
+    ${list.map(c=>`<tr><td style="font-weight:600">${c.nom}</td><td>${c.infraction}</td><td><span class="badge ${c.gravite==='Critique'||c.gravite==='Grave'?'badge-red':c.gravite==='Modérée'?'badge-gold':'badge-gray'}">${c.gravite}</span></td><td style="color:var(--text-secondary)">${c.sanction}</td><td style="color:var(--text-muted)">${c.agent}</td><td style="color:var(--text-muted)">${fmtDate(c.created_at)}</td>${isAdmin?`<td><button class="btn btn-danger btn-sm" onclick="delCasier('${c.id}')">✕</button></td>`:''}</tr>`).join('')}
+  </tbody></table></div>`;
+}
+async function srchCasier(){const q=document.getElementById('srch-cas').value.toLowerCase();document.getElementById('cas-list').innerHTML=casierTable(window._casi.filter(c=>c.nom.toLowerCase().includes(q)),window._caAdmin);}
+async function delCasier(id){if(!confirm('Supprimer?'))return;try{await api('DELETE','/casiers/'+id);toast('Supprimé');navigate('casier');}catch(e){toast(e.message,true);}}
+function openNewCasier(){
+  openModal('Nouveau Casier / Infraction',`
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Individu</label><input class="form-input" id="c-nom" placeholder="Nom (Jedi ou externe)"></div>
+      <div class="form-group"><label class="form-label">Gravité</label><select class="form-select" id="c-grav"><option>Mineure</option><option>Modérée</option><option>Grave</option><option>Critique</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Infraction</label><input class="form-input" id="c-infr" placeholder="Description de l'infraction"></div>
+    <div class="form-group" style="margin-top:14px"><label class="form-label">Sanction</label><input class="form-input" id="c-sanc" placeholder="Mesure disciplinaire appliquée"></div>
+  `,async()=>{
+    const nom=document.getElementById('c-nom').value.trim();
+    if(!nom)return toast('Nom requis',true);
+    const btn=document.getElementById('modal-confirm-btn');btn.disabled=true;
+    try{await api('POST','/casiers',{nom,gravite:document.getElementById('c-grav').value,infraction:document.getElementById('c-infr').value,sanction:document.getElementById('c-sanc').value});closeModal();toast('Casier enregistré ✓');navigate('casier');}
+    catch(e){toast(e.message,true);btn.disabled=false;}
+  });
+}
+
+// ============================================================
+// PROMOTIONS
+// ============================================================
+async function promotions(){
+  const [list,membres]=await Promise.all([api('GET','/promotions'),api('GET','/membres')]);
+  const isAdmin=CURRENT_USER.role==='admin'||CURRENT_USER.role==='maitre';
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header"><div><div class="page-title">Promotions & Cérémonies</div><div class="page-sub">Élévations de rang officielles</div></div>${isAdmin?`<button class="btn btn-primary" onclick="openNewPromotion()">+ Nouvelle Promotion</button>`:''}</div>
+  <div class="content">
+    <div class="grid-2">
+      <div><div class="card"><div class="card-title">✦ Historique</div>
+        ${list.length?list.slice(0,20).map(p=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+            <div><div style="font-weight:600;font-size:14px">${p.membre}</div><div style="font-size:11px;color:var(--text-muted)">${fmtDate(p.created_at)} — par ${p.promoteur}</div></div>
+            <div style="text-align:right;font-size:11px">${badgeHtml(p.rank_old)} → ${badgeHtml(p.rank_new)}</div>
+          </div>`).join(''):'<div class="empty-state"><p>Aucune promotion</p></div>'}
+      </div></div>
+      <div><div class="card"><div class="card-title">◈ Effectifs par Grade</div>
+        <table class="data-table">${RANKS.map(r=>{const c=membres.filter(m=>m.rank===r.id).length;return c?`<tr><td>${badgeHtml(r.id)}</td><td style="font-family:'Orbitron',monospace">${c}</td></tr>`:''}).join('')}</table>
+      </div></div>
+    </div>
+  </div>`;
+  window._promoMembres=membres;
+}
+function openNewPromotion(){
+  const membres=window._promoMembres||[];
+  openModal('Nouvelle Promotion',`
+    <div class="form-group"><label class="form-label">Membre promu</label><select class="form-select" id="prm-m" onchange="updatePromoDisplay(this)">${membres.map(m=>`<option value="${m.id}" data-rank="${m.rank}">${m.name} — ${getRank(m.rank).label}</option>`).join('')}</select></div>
+    <div class="form-row" style="margin-top:14px">
+      <div class="form-group"><label class="form-label">Grade actuel</label><input class="form-input" id="prm-old" value="${membres[0]?getRank(membres[0].rank).label:'—'}" readonly style="opacity:0.6"></div>
+      <div class="form-group"><label class="form-label">Nouveau Grade</label><select class="form-select" id="prm-new">${RANKS.map(r=>`<option value="${r.id}">${r.label}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-group" style="margin-top:14px"><label class="form-label">Note de promotion</label><textarea class="form-textarea" id="prm-note" placeholder="Mérites, raisons de la promotion..."></textarea></div>
+  `,async()=>{
+    const sel=document.getElementById('prm-m');
+    const membId=sel.value;
+    const memb=membres.find(m=>m.id===membId);
+    const newRank=document.getElementById('prm-new').value;
+    const btn=document.getElementById('modal-confirm-btn');btn.disabled=true;
+    try{await api('POST','/promotions',{membre:memb.name,membre_id:membId,rank_old:memb.rank,rank_new:newRank,note:document.getElementById('prm-note').value});closeModal();toast('Promotion enregistrée ✓');navigate('promotions');}
+    catch(e){toast(e.message,true);btn.disabled=false;}
+  });
+}
+function updatePromoDisplay(sel){const opt=sel.selectedOptions[0];document.getElementById('prm-old').value=getRank(opt.dataset.rank).label;}
+
+// ============================================================
+// ADMIN
+// ============================================================
+async function admin(){
+  if(CURRENT_USER.role!=='admin'&&CURRENT_USER.role!=='maitre'){navigate('accueil');return;}
+  const users=await api('GET','/auth/users');
+  const membres=await api('GET','/membres');
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header"><div><div class="page-title">Administration</div><div class="page-sub">Gestion des comptes et permissions</div></div></div>
+  <div class="content">
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-title">⚙ Créer un compte</div>
+          <div class="form-group"><label class="form-label">Identifiant</label><input class="form-input" id="adm-user" placeholder="Nom de connexion"></div>
+          <div class="form-group" style="margin-top:10px"><label class="form-label">Mot de passe</label><input class="form-input" id="adm-pass" type="password" placeholder="Mot de passe sécurisé"></div>
+          <div class="form-row" style="margin-top:10px">
+            <div class="form-group"><label class="form-label">Rôle</label><select class="form-select" id="adm-role"><option value="membre">Membre</option><option value="maitre">Maître (admin)</option><option value="admin">Admin total</option></select></div>
+            <div class="form-group"><label class="form-label">Lier à un membre</label><select class="form-select" id="adm-mid"><option value="">— Aucun —</option>${membres.map(m=>`<option value="${m.id}">${m.name}</option>`).join('')}</select></div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:14px;width:100%" onclick="createAccount()">Créer le compte</button>
+        </div>
+        <div class="card">
+          <div class="card-title">🔒 Changer mon mot de passe</div>
+          <div class="form-group"><label class="form-label">Ancien mot de passe</label><input class="form-input" id="pw-old" type="password"></div>
+          <div class="form-group" style="margin-top:10px"><label class="form-label">Nouveau mot de passe</label><input class="form-input" id="pw-new" type="password"></div>
+          <button class="btn btn-primary" style="margin-top:14px;width:100%" onclick="changePassword()">Mettre à jour</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">◇ Comptes actifs (${users.length})</div>
+        <table class="data-table"><thead><tr><th>Identifiant</th><th>Rôle</th><th>Membre lié</th><th>Créé le</th><th></th></tr></thead><tbody>
+          ${users.map(u=>`<tr>
+            <td style="font-weight:600">${u.username}${u.id===CURRENT_USER.id?'<span class="admin-badge">moi</span>':''}</td>
+            <td><span class="badge ${u.role==='admin'?'badge-gold':u.role==='maitre'?'badge-purple':'badge-gray'}">${u.role}</span></td>
+            <td style="color:var(--text-muted)">${membres.find(m=>m.id===u.membre_id)?.name||'—'}</td>
+            <td style="color:var(--text-muted)">${fmtDate(u.created_at)}</td>
+            <td>${u.id!==CURRENT_USER.id?`<button class="btn btn-danger btn-sm" onclick="delUser('${u.id}')">✕</button>`:''}</td>
+          </tr>`).join('')}
+        </tbody></table>
+      </div>
+    </div>
+  </div>`;
+}
+async function createAccount(){
+  const username=document.getElementById('adm-user').value.trim();
+  const password=document.getElementById('adm-pass').value;
+  const role=document.getElementById('adm-role').value;
+  const membre_id=document.getElementById('adm-mid').value||null;
+  if(!username||!password)return toast('Champs requis',true);
+  try{await api('POST','/auth/register',{username,password,role,membre_id});toast('Compte créé ✓');navigate('admin');}
+  catch(e){toast(e.message,true);}
+}
+async function delUser(id){if(!confirm('Supprimer ce compte ?'))return;try{await api('DELETE','/auth/users/'+id);toast('Compte supprimé');navigate('admin');}catch(e){toast(e.message,true);}}
+async function changePassword(){
+  const old_p=document.getElementById('pw-old').value;
+  const new_p=document.getElementById('pw-new').value;
+  if(!old_p||!new_p)return toast('Champs requis',true);
+  try{await api('PUT','/auth/password',{old_password:old_p,new_password:new_p});toast('Mot de passe mis à jour ✓');document.getElementById('pw-old').value='';document.getElementById('pw-new').value='';}
+  catch(e){toast(e.message,true);}
+}
+
+// ============================================================
+// PROFIL
+// ============================================================
+async function profil(){
+  const me=await api('GET','/auth/me');
+  CURRENT_USER=me;
+  const m=me.membre;
+  document.getElementById('main-content').innerHTML=`
+  <div class="page-header"><div><div class="page-title">Mon Profil</div><div class="page-sub">Informations de votre compte</div></div></div>
+  <div class="content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">◈ Identité</div>
+        ${m?`
+          <div style="text-align:center;margin-bottom:20px">
+            <div class="member-avatar" style="width:80px;height:80px;margin:0 auto 12px;font-size:28px">${m.photo?`<img src="${m.photo}" alt="">`:`<span style="color:var(--gold);font-family:'Cinzel',serif">${initials(m.name)}</span>`}</div>
+            <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-primary);margin-bottom:8px">${m.name}</div>
+            ${badgeHtml(m.rank)}
+          </div>
+          <table class="data-table">
+            <tr><td style="color:var(--text-muted)">Compte</td><td>${me.username}</td></tr>
+            <tr><td style="color:var(--text-muted)">Spécialisation</td><td>${m.spec||'—'}</td></tr>
+            <tr><td style="color:var(--text-muted)">Maître</td><td>${m.mestre||'—'}</td></tr>
+            <tr><td style="color:var(--text-muted)">Statut</td><td><span class="badge ${m.status==='actif'?'badge-green':'badge-gray'}">${m.status}</span></td></tr>
+          </table>
+          ${m.bio?`<div style="margin-top:14px;padding:12px;background:var(--bg-deep);border-radius:6px;font-size:13px;color:var(--text-secondary);line-height:1.6">${m.bio}</div>`:''}
+        `:`<div class="empty-state"><div class="empty-icon">◇</div><p>Aucun personnage lié à ce compte</p><p style="margin-top:8px;font-size:12px">Contactez un administrateur</p></div>`}
+      </div>
+      <div class="card">
+        <div class="card-title">🔒 Sécurité</div>
+        <div class="form-group"><label class="form-label">Ancien mot de passe</label><input class="form-input" id="pw-old" type="password"></div>
+        <div class="form-group" style="margin-top:10px"><label class="form-label">Nouveau mot de passe</label><input class="form-input" id="pw-new" type="password"></div>
+        <button class="btn btn-primary" style="margin-top:14px;width:100%" onclick="changePassword()">Mettre à jour</button>
+        <hr style="border-color:var(--border);margin:20px 0">
+        <button class="logout-btn" style="display:block;width:100%;padding:10px" onclick="doLogout()">⏻ Se déconnecter</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+checkToken();
+</script>
+</body>
+</html>
